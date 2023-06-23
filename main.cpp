@@ -278,9 +278,10 @@ void drawline()
     }
 }
 
-void shortestpath(int src)
-{
+#include <stdio.h>
 
+void shortestpath(int src, int n, int cost[MAX][MAX])
+{
     // START OF BELLMAN FORD
     int j, p, q, x1, y1, x2, y2, x, y;
     int d[MAX], parent[MAX];
@@ -303,10 +304,8 @@ void shortestpath(int src)
         {
             for (j = 1; j <= n; ++j)
             {
-
                 if (d[it] + cost[it][j] < d[j])
                 {
-
                     d[j] = d[it] + cost[it][j];
                     parent[j] = it;
                 }
@@ -323,17 +322,29 @@ void shortestpath(int src)
                 continue;
             if (d[it] + cost[it][j] < d[j])
             {
-                printf("\n\nGraph contains a negative-weight cycle\n");
-
+                FILE *file = fopen("output.txt", "w"); // Open the file in write mode
+                if (file != NULL)
+                {
+                    fprintf(file, "\n\nGraph contains a negative-weight cycle\n");
+                    fclose(file); // Close the file
+                }
                 return;
             }
         }
     }
-    printf("From source %d\n", src);
-    for (i = 1; i <= n; i++)
-        if (i != src)
-            printf("The shortest distance to %d is %d\n", i, d[i]);
-    printf("\n");
+
+    FILE *file = fopen("output.txt", "w"); // Open the file in write mode
+    if (file != NULL)
+    {
+        // Write the shortest path results to the file
+        for (it = 1; it <= n; ++it)
+        {
+            fprintf(file, "Shortest path from node %d to %d: %d\n", src, it, d[it]);
+        }
+        fclose(file); // Close the file
+    }
+}
+
     // INITIALIZE SPANNING TREE EDGES
     int l = 0;
     for (int it = 1; it <= n; ++it)
@@ -467,31 +478,6 @@ void top_menu(int option)
     }
 }
 
-//output window display
-void display2()
-{
-    glClear(GL_COLOR_BUFFER_BIT);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    
-    shortestpath(src);
-    
-    glutSwapBuffers();
-}
-
-void reshape(int width, int height)
-{
-    glViewport(0, 0, width, height);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluOrtho2D(0, width, 0, height);
-    
-    windowWidth = width;
-    windowHeight = height;
-    
-    glutPostRedisplay();
-}
-
 void init(void)
 {
     glClearColor(1.0, 1.0, 1.0, 1.0);
@@ -544,16 +530,6 @@ int main(int argc, char **argv)
     glutAttachMenu(GLUT_RIGHT_BUTTON);
     printf("\nGO TO MY WINDOW AND CLICK RIGHT BUTTON FOR NEXT OPTION\n");
     init();
-
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutInitWindowSize(500, 500);
-    glutInitWindowPosition(520, 0);
-    glutCreateWindow("Shortest Path Display");
-
-    glutDisplayFunc(display2);
-    //glutReshapeFunc(reshape);
-
-    glClearColor(1.0, 1.0, 1.0, 1.0);
 
     glutMainLoop();
 }
