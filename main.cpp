@@ -5,63 +5,14 @@
 #define GL_PI 3.14
 #define MAX 25
 #define INFINITY 999
+
 int n, i = 1, a[25], b[25], cost[25][25], tree[25][25], src, l[2], dist[10];
 char s[20], *s1;
 void *currentfont;
 
-char *itoa(int num, char *buffer, int base)    
-/*converts integer into char string
-The function takes three arguments: the integer to be converted (num), 
-a character buffer to store the resulting string (buffer),
-and the base to be used for the conversion */
+char *itoa(int num, char *buffer, int base)
 {
-    int curr = 0; /*The function first initializes a variable curr to 0. 
-    This variable will be used to keep track of the current position in the buffer where the next character will be written */
-
-    if (num == 0)
-    {
-        // Base case
-        buffer[curr++] = '0';
-        buffer[curr] = '\0';
-        return buffer;
-    }
-
-    int num_digits = 0;
-
-    if (num < 0)
-    {
-        if (base == 10)
-        {
-            num_digits++;
-            buffer[curr] = '-';
-            curr++;
-            // Make it positive and finally add the minus sign
-            num *= -1;
-        }
-        else
-            // Unsupported base. Return NULL
-            return NULL;
-    }
-
-    num_digits += (int)floor(log(num) / log(base)) + 1;
-
-    // Go through the digits one by one
-    // from left to right
-    while (curr < num_digits)
-    {
-        // Get the base value. For example, 10^2 = 1000, for the third digit
-        int base_val = (int)pow(base, num_digits - 1 - curr);
-
-        // Get the numerical value
-        int num_val = num / base_val;
-
-        char value = num_val + '0';
-        buffer[curr] = value;
-
-        curr++;
-        num -= base_val * num_val;
-    }
-    buffer[curr] = '\0';
+    sprintf(buffer, "%d", num);
     return buffer;
 }
 
@@ -81,6 +32,7 @@ void setFont(void *font)
 {
     currentfont = font;
 }
+
 // FUNCTION TO DRAW BITMAP string at (x,y)
 void drawstring(GLfloat x, GLfloat y, char *string)
 {
@@ -100,6 +52,7 @@ void delay()
         for (int j = 0; j < 22000; j++)
             ;
 }
+
 // DISPLAY FUNCTION FOR TITLE PAGE
 void title()
 {
@@ -127,6 +80,7 @@ void title()
     drawstring(100, 100, "Right click in My Window for options");
     glFlush();
 }
+
 // DISPLAY FUNCTION FOR INITIALIZING (DRAWING) THE  INPUT AND OUTPUT AREAS
 void initial()
 {
@@ -136,425 +90,333 @@ void initial()
 
     glColor3f(0.0, 0.0, 0.0);
     drawstring(20, 230, "Input Area");
-    drawstring(20, 470, "Output Area");
+    drawstring(300, 230, "Output Area");
 
-    glColor3f(0.0, 0.0, 0.0);
-    glLineWidth(3.0);
-    glBegin(GL_LINES);
-    glVertex2f(10, 10);
-    glVertex2f(10, 490);
-
-    glVertex2f(10, 490);
-    glVertex2f(490, 490);
-
-    glVertex2f(490, 490);
-    glVertex2f(490, 10);
-
-    glVertex2f(490, 10);
-    glVertex2f(10, 10);
-
-    glVertex2f(10, 250);
-    glVertex2f(490, 250);
+    glLineWidth(2.0);
+    glColor3f(1.0, 1.0, 1.0);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(20, 20);
+    glVertex2f(20, 210);
+    glVertex2f(250, 210);
+    glVertex2f(250, 20);
     glEnd();
 
+    glLineWidth(2.0);
+    glColor3f(1.0, 1.0, 1.0);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(300, 20);
+    glVertex2f(300, 210);
+    glVertex2f(470, 210);
+    glVertex2f(470, 20);
+    glEnd();
     glFlush();
 }
 
-// BLANK DISPLAY FUNCTION
-void display(void)
+// FUNCTION TO DRAW BITMAP NUMBER AT (X,Y)
+void raster(int x, int y, int num)
 {
+    int temp, j = 0;
+    char str[20];
 
-    glFlush();
-}
-
-// DRAW A BITMAP NUMBER i at (x,y)
-void raster(int x, int y, int i)
-{
-    char z = i + '0';
-    glRasterPos2f(x - 5, y - 5);
-    glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, z);
-}
-
-// DRAW THE NODES (SQUARES)
-void drawSquare(int x, int y)
-{
-
-    if (i <= n)
+    temp = num;
+    while (temp != 0)
     {
-        y = 500 - y; // Convert from screen coordinates
-        glPointSize(40);
-
-        if (i == src)
-            glColor3f(0.7f, 0.4f, 0.0f);
-        else
-            glColor3f(0.5f, 0.5f, 0.8f);
-
-        glBegin(GL_POINTS);
-        glVertex2f(x, y);
-        glEnd();
-
-        a[i] = x;
-        b[i] = y;
-
-        glColor3f(0.0f, 1.0f, 0.0f);
-        s1 = itoa(i, s, 10);
-        drawstring(x - 5, y - 5, s1);
-
-        glFlush();
+        l[j] = temp % 10;
+        temp = temp / 10;
+        j++;
     }
-    i = i + 1;
+    j--;
+    while (j >= 0)
+    {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, l[j] + 48);
+        j--;
+    }
 }
 
-// READ DATA: |V|,COST MATRIX, SOURCE VERTEX
-void read()
+// FUNCTION TO DRAW SQUARE AT (X,Y)
+void drawSquare(GLint x, GLint y)
 {
-    printf("Enter the number of vertices\n");
-    scanf("%d", &n);
-    printf("Enter the cost matrix\n");
-    for (int j = 1; j <= n; j++)
-        for (int k = 1; k <= n; k++)
-        {
-            scanf("%d", &cost[j][k]);
-            if (cost[j][k] == 0 || cost[j][k] == 999)
-                cost[j][k] = 999;
-            else
-            {
-                edges[EDGES].u = j;
-                edges[EDGES].v = k;
-                edges[EDGES].w = cost[j][k];
-                EDGES++;
-            }
-        }
-    printf("\nGO TO MY WINDOW, PLACE THE NODES IN INPUT AREA AND THEN CLICK RIGHT BUTTON FOR NEXT OPTION\n");
-    initial(); // Draw the initial screen
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(x, y);
+    glVertex2f(x + 40, y);
+    glVertex2f(x + 40, y + 40);
+    glVertex2f(x, y + 40);
+    glEnd();
+    glFlush();
 }
 
-// DRAW THE EDGES
+// FUNCTION TO DRAW LINE BETWEEN NODES
 void drawline()
 {
-    int j, k, x1, x2, y1, y2;
-    for (j = 1; j <= n; j++)
+    int i, j;
+    glLineWidth(3.0);
+    glColor3f(1.0, 0.0, 0.0);
+    for (i = 0; i < n; i++)
     {
-        for (k = 1; k <= n; k++)
+        for (j = 0; j < n; j++)
         {
-            if (cost[j][k] != 999 && j < k)
+            if (cost[i][j] != 0 && cost[i][j] != INFINITY)
             {
-                x1 = a[j];
-                y1 = b[j];
-                x2 = a[k];
-                y2 = b[k];
-
-                glColor3f(0.0, 0.5, 0.0);
-
-                glLineWidth(3);
                 glBegin(GL_LINES);
-                glVertex2i(x1 - 7, y1 + 10);
-                glVertex2i(x2 - 7, y2 + 10);
+                glVertex2f(a[i], b[i]);
+                glVertex2f(a[j], b[j]);
                 glEnd();
-
-                s1 = itoa(cost[j][k], s, 10);
-                drawstring((x1 + x2 - 16) / 2, (y1 + y2 + 22) / 2, s1);
-                glFlush();
             }
-
-            if (cost[j][k] != cost[k][j] && cost[j][k] != 999 && j > k)
-            {
-                x1 = a[j];
-                y1 = b[j];
-                x2 = a[k];
-                y2 = b[k];
-
-                glColor3f(1.0, 0.5, 0.0);
-                glBegin(GL_LINES);
-                glVertex2i(x1 + 10, y1 + 18);
-                glVertex2i(x2 + 10, y2 + 18);
-                glEnd();
-
-                s1 = itoa(cost[j][k], s, 10);
-                drawstring((x1 + x2 + 20) / 2, (y1 + y2 + 36) / 2, s1);
-                glFlush();
-            }
-        }
-    }
-}
-
-void shortestpath(int src)
-{
-
-    // START OF BELLMAN FORD
-    int j, p, q, x1, y1, x2, y2, x, y;
-    int d[MAX], parent[MAX];
-
-    int it, flag = 0, child[MAX];
-
-    // INITIALIZE DATA OBJECTS
-    for (it = 1; it <= n; ++it)
-    {
-        d[it] = INFINITY;
-        parent[it] = src;
-    }
-    d[src] = 0;
-
-    // RELAXATION METHOD
-    for (int m = 0; m < n; m++) // REPEAT N TIMES
-    {
-        // RELAX ALL EDGES
-        for (it = 1; it <= n; ++it)
-        {
-            for (j = 1; j <= n; ++j)
-            {
-
-                if (d[it] + cost[it][j] < d[j])
-                {
-
-                    d[j] = d[it] + cost[it][j];
-                    parent[j] = it;
-                }
-            }
-        }
-    }
-
-    // CHECK FOR NEGATIVE LOOPS
-    for (it = 1; it <= n; ++it)
-    {
-        for (j = 1; j <= n; ++j)
-        {
-            if (cost[it][j] == INFINITY)
-                continue;
-            if (d[it] + cost[it][j] < d[j])
-            {
-                printf("\n\nGraph contains a negative-weight cycle\n");
-
-                return;
-            }
-        }
-    }
-    printf("From source %d\n", src);
-    for (i = 1; i <= n; i++)
-        if (i != src)
-            printf("The shortest distance to %d is %d\n", i, d[i]);
-    printf("\n");
-    // INITIALIZE SPANNING TREE EDGES
-    int l = 0;
-    for (int it = 1; it <= n; ++it)
-    {
-        if (parent[it] == it)
-            continue;
-        tree[l][1] = parent[it];
-        tree[l++][2] = it;
-    }
-
-    // DRAW THE SPANNING TREE
-    for (int r = 1; r <= n; r++)
-    {
-
-        x = a[r];
-        y = b[r];
-
-        glPointSize(25);
-        if (r == src)
-            glColor3f(0.7f, 0.4f, 0.0f);
-        else
-            glColor3f(0.5f, 0.5f, 0.8f);
-
-        glBegin(GL_POINTS);
-        glVertex2f(x, y + 250);
-        glEnd();
-
-        glColor3f(0.0, 1.0, 0.0);
-
-        s1 = itoa(r, s, 10);
-        drawstring(x, y + 250, s1);
-
-        glFlush();
-    }
-
-    for (int x = 0; x < l; x++)
-    {
-        p = tree[x][1];
-        q = tree[x][2];
-        if (p == 0 || q == 0)
-            continue;
-
-        x1 = a[p];
-        y1 = b[p];
-        x2 = a[q];
-        y2 = b[q];
-
-        if (p < q)
-        {
-            glColor3f(0.0, 0.5, 0.0);
-            glBegin(GL_LINES);
-            glVertex2i(x1, y1 + 250);
-            glVertex2i(x2, y2 + 250);
-            glEnd();
-
-            s1 = itoa(cost[p][q], s, 10);
-            drawstring((x1 + x2) / 2, (y1 + y2 + 500) / 2, s1);
-        }
-
-        else
-        {
-            glColor3f(1.0, 0.5, 0.0);
-            glBegin(GL_LINES);
-            glVertex2i(x1, y1 + 250);
-            glVertex2i(x2, y2 + 250);
-            glEnd();
-
-            s1 = itoa(cost[p][q], s, 10);
-            drawstring((x1 + x2) / 2, (y1 + y2 + 500) / 2, s1);
         }
     }
     glFlush();
 }
 
-void mouse(int bin, int state, int x, int y)
+// FUNCTION TO IMPLEMENT BELLMAN FORD ALGORITHM
+void shortestpath()
 {
-    if (bin == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
-        drawSquare(x, y);
+    int k, current;
+    for (i = 0; i < n; i++)
+    {
+        d[i] = INFINITY;
+    }
+    d[src] = 0;
+    for (k = 1; k <= n - 1; k++)
+    {
+        for (i = 0; i < EDGES; i++)
+        {
+            if (d[edges[i].v] > d[edges[i].u] + edges[i].w)
+            {
+                d[edges[i].v] = d[edges[i].u] + edges[i].w;
+                current = edges[i].v;
+            }
+        }
+    }
+    // Check for negative cycles
+    for (i = 0; i < EDGES; i++)
+    {
+        if (d[edges[i].v] > d[edges[i].u] + edges[i].w)
+        {
+            printf("Negative cycle found.\n");
+            return;
+        }
+    }
+    printf("Shortest distances:\n");
+    for (i = 0; i < n; i++)
+    {
+        printf("From %d to %d: %d\n", src, i, d[i]);
+    }
 }
 
-void top_menu(int option)
+// FUNCTION TO CALCULATE DISTANCE
+float distance(int x1, int x2, int y1, int y2)
 {
-    int x, y;
+    float d;
+    d = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
+    return d;
+}
+
+// FUNCTION TO CALCULATE COST MATRIX
+void calculate_cost_matrix()
+{
+    int i, j;
+    for (i = 0; i < n; i++)
+    {
+        for (j = 0; j < n; j++)
+        {
+            if (i != j)
+            {
+                cost[i][j] = (int)distance(a[i], a[j], b[i], b[j]);
+            }
+            else
+            {
+                cost[i][j] = 0;
+            }
+        }
+    }
+}
+
+// FUNCTION TO ADD EDGE TO THE GRAPH
+void add_edge(int u, int v, int w)
+{
+    edges[EDGES].u = u;
+    edges[EDGES].v = v;
+    edges[EDGES].w = w;
+    EDGES++;
+}
+
+// FUNCTION TO DRAW THE GRAPH
+void draw_graph()
+{
+    int i;
+    glPointSize(10.0);
+    glColor3f(1.0, 0.0, 0.0);
+    for (i = 0; i < n; i++)
+    {
+        glPushMatrix();
+        glTranslatef(a[i], b[i], 0);
+        glutSolidSphere(5, 20, 20);
+        glPopMatrix();
+    }
+    drawline();
+    glFlush();
+}
+
+// MOUSE FUNCTION
+void MyMouse(int button, int state, int x, int y)
+{
+    if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+    {
+        glClear(GL_COLOR_BUFFER_BIT);
+        initial();
+    }
+
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+    {
+        if (i <= n)
+        {
+            a[i] = x;
+            b[i] = 480 - y;
+            glColor3f(0.0, 0.0, 0.0);
+            glPushMatrix();
+            glTranslatef(x, 480 - y, 0);
+            glutSolidSphere(5, 20, 20);
+            glPopMatrix();
+            glFlush();
+            i++;
+        }
+    }
+}
+
+// KEYBOARD FUNCTION
+void MyKeyboard(unsigned char key, int x, int y)
+{
+    if (key == 13) // ASCII value of Carriage Return
+    {
+        calculate_cost_matrix();
+        draw_graph();
+        glutMouseFunc(NULL);
+    }
+}
+
+// FUNCTION TO DISPLAY THE COST MATRIX
+void display_cost_matrix()
+{
+    int i, j;
+    char buffer[10];
+    setFont(GLUT_BITMAP_HELVETICA_12);
+    for (i = 0; i < n; i++)
+    {
+        for (j = 0; j < n; j++)
+        {
+            glColor3f(0.0, 0.0, 0.0);
+            itoa(cost[i][j], buffer, 10);
+            drawstring(310 + j * 20, 200 - i * 20, buffer);
+        }
+    }
+    glFlush();
+}
+
+// FUNCTION TO DISPLAY THE SHORTEST PATHS
+void display_shortest_paths()
+{
+    int i;
+    char buffer[10];
+    setFont(GLUT_BITMAP_HELVETICA_12);
+    for (i = 0; i < n; i++)
+    {
+        glColor3f(0.0, 0.0, 0.0);
+        itoa(i, buffer, 10);
+        drawstring(310, 200 - i * 20, buffer);
+        if (d[i] == INFINITY)
+        {
+            glColor3f(1.0, 0.0, 0.0);
+            drawstring(330, 200 - i * 20, "Infinity");
+        }
+        else
+        {
+            glColor3f(0.0, 0.0, 0.0);
+            itoa(d[i], buffer, 10);
+            drawstring(330, 200 - i * 20, buffer);
+        }
+    }
+    glFlush();
+}
+
+// FUNCTION TO DISPLAY THE MENU
+void display_menu()
+{
+    setFont(GLUT_BITMAP_HELVETICA_18);
+    glColor3f(0.0, 0.0, 0.0);
+    drawstring(330, 250, "MENU");
+    glColor3f(0.0, 0.0, 0.0);
+    drawstring(310, 200, "1. Input Graph");
+    glColor3f(0.0, 0.0, 0.0);
+    drawstring(310, 180, "2. Calculate Shortest Paths");
+    glColor3f(0.0, 0.0, 0.0);
+    drawstring(310, 160, "3. Display Cost Matrix");
+    glColor3f(0.0, 0.0, 0.0);
+    drawstring(310, 140, "4. Display Shortest Paths");
+    glColor3f(0.0, 0.0, 0.0);
+    drawstring(310, 120, "5. Exit");
+    glFlush();
+}
+
+// FUNCTION TO SELECT FROM THE MENU
+void select_menu(int option)
+{
     switch (option)
     {
     case 1:
-        read();
-        glutPostRedisplay();
+        glutMouseFunc(MyMouse);
+        glutKeyboardFunc(NULL);
         break;
     case 2:
-        drawline();
-        glutPostRedisplay();
+        shortestpath();
         break;
     case 3:
-        for (int i = 1; i <= n; i++)
-        {
-            glClear(GL_COLOR_BUFFER_BIT);
-            initial();
-            for (int r = 1; r <= n; r++)
-            {
-                x = a[r];
-                y = b[r];
-                glPointSize(40);
-                if (r == src)
-                    glColor3f(0.7f, 0.4f, 0.0f);
-                else
-                    glColor3f(0.5f, 0.5f, 0.8f);
-                glBegin(GL_POINTS);
-                glVertex2f(x, y);
-                glEnd();
-                glColor3f(0.0, 1.0, 0.0);
-                s1 = itoa(r, s, 10);
-                drawstring(x - 5, y - 5, s1);
-                setFont(GLUT_BITMAP_HELVETICA_18);
-                glColor3f(0.0, 0.0, 0.0);
-                drawstring(130, 470, "For source");
-                glFlush();
-            }
-            drawline();
-            s1 = itoa(i, s, 10);
-            setFont(GLUT_BITMAP_HELVETICA_18);
-            glColor3f(0.0, 0.0, 0.0);
-            drawstring(225, 470, s1);
-            glutPostRedisplay();
-            shortestpath(i);
-            delay();
-        }
+        display_cost_matrix();
         break;
     case 4:
+        display_shortest_paths();
+        break;
+    case 5:
         exit(0);
+        break;
     }
 }
 
-//output window display
-void display2()
+// RESHAPE FUNCTION
+void MyReshape(GLsizei w, GLsizei h)
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0.0, (GLdouble)w, 0.0, (GLdouble)h);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    
-    shortestpath();
-    
-    glutSwapBuffers();
 }
 
-void reshape(int width, int height)
+// MAIN FUNCTION
+void main(int argc, char **argv)
 {
-    glViewport(0, 0, width, height);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluOrtho2D(0, width, 0, height);
-    
-    windowWidth = width;
-    windowHeight = height;
-    
-    glutPostRedisplay();
-}
+    printf("Enter the number of nodes in the graph: ");
+    scanf("%d", &n);
+    printf("Enter the source node: ");
+    scanf("%d", &src);
 
-void init(void)
-{
-    glClearColor(1.0, 1.0, 1.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glViewport(0, 0, 500, 500);
-    glMatrixMode(GL_PROJECTION);
-    glOrtho(0.0, 500.0, 0.0, 500.0, 1.0, -1.0);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glFlush();
-}
-void myInit1()
-{
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    glColor3f(0.0f, 0.0f, 0.0f);
-    glPointSize(5.0);
-    gluOrtho2D(0.0, 500.0, 0.0, 500.0);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    setFont(GLUT_BITMAP_HELVETICA_18);
-}
-
-void display1(void)
-{
-    glClear(GL_COLOR_BUFFER_BIT);
-    title();
-}
-int main(int argc, char **argv)
-{
     glutInit(&argc, argv);
-
-    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-    glutInitWindowPosition(520, 0);
-    glutInitWindowSize(500, 500);
-    glutCreateWindow("Front Sheet");
-    glutDisplayFunc(display1);
-    myInit1();
-
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glutInitWindowSize(500, 500);
     glutInitWindowPosition(0, 0);
-    glutCreateWindow("My Window");
-    glutDisplayFunc(display);
-    glutMouseFunc(mouse);
-    glutCreateMenu(top_menu);
-    glutAddMenuEntry("Read Cost Matrix", 1);
-    glutAddMenuEntry("Display Weighted Graph", 2);
-    glutAddMenuEntry("Display Shortest Path", 3);
-    glutAddMenuEntry("Exit", 4);
+    glutCreateWindow("Bellman Ford Algorithm");
+    glutReshapeFunc(MyReshape);
+    glutDisplayFunc(title);
+    glutIdleFunc(title);
+
+    glutCreateMenu(select_menu);
+    glutAddMenuEntry("Input Graph", 1);
+    glutAddMenuEntry("Calculate Shortest Paths", 2);
+    glutAddMenuEntry("Display Cost Matrix", 3);
+    glutAddMenuEntry("Display Shortest Paths", 4);
+    glutAddMenuEntry("Exit", 5);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
-    printf("\nGO TO MY WINDOW AND CLICK RIGHT BUTTON FOR NEXT OPTION\n");
-    init();
-
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutInitWindowSize(500, 500);
-    glutInitWindowPosition(520, 0);
-    glutCreateWindow("Shortest Path Display");
-
-    glutDisplayFunc(display2);
-    //glutReshapeFunc(reshape);
 
     glClearColor(1.0, 1.0, 1.0, 1.0);
-
     glutMainLoop();
 }
-
